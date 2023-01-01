@@ -7,3 +7,4 @@ services:
     tty: true
     volumes: 
       - ../:/usr/src
+      - ~/.gitconfig:/etc/gitconfig
