@@ -8,3 +8,4 @@ services:
     volumes: 
       - ../:/usr/src
       - ~/.gitconfig:/etc/gitconfig
+      - ~/.ssh:/etc/.ssh
