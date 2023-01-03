@@ -9,3 +9,7 @@ services:
       - ../:/usr/src
       - ~/.gitconfig:/etc/gitconfig
       - ~/.ssh:/etc/.ssh
+  redis:
+    build: ./redis
+    ports:
+      - 6379:6379
