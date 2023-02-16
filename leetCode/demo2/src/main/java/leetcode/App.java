@@ -10,8 +10,8 @@ import java.util.List;
 public class App {
   public static void main( String[] args ) {
     App app = new App();
-    int [] param = {1,3,3};
-    app.pivotIndex(param); 
+    int [] param = {1,7,3,6,5,6};
+    System.out.println(app.pivotIndex(param)); 
   }
 
   /**
@@ -21,6 +21,7 @@ public class App {
   public int pivotIndex(int[] nums) {
     List<Integer> numsList = convertIntList(nums);  
     for (int x=0; x<numsList.size(); x++) {
+      //TODO 左右のINDEXから1つずつ真ん中にスライドしていく 
       List<Integer> subListLeft = numsList. subList(0, x);
       List<Integer> subListRight = numsList.subList(x, numsList.size());
       if (equalListElemSum(subListLeft,subListRight)) {
@@ -58,6 +59,9 @@ public class App {
       if (bSum == null) bSum = 0;
       bSum = bSum + e;
     }
+
+    // Debug Comment
+    System.out.println("Debug:" + "aSum=" + aSum + ",bSum=" + bSum);
     
     if (aSum != null && bSum != null && aSum.equals(bSum)) {
       return true; 
