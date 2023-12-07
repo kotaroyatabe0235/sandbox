@@ -1,0 +1,15 @@
+# 1. To enable graphiql
+graphiql:
+  mapping: /graphiql
+  endpoint:
+    graphql: /graphql
+# 2. To enable graphql metrics
+graphql:
+  servlet:
+    actuator-metrics: true
+# 3. To enable to get metrics of spring-actuator from /actuator/prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus

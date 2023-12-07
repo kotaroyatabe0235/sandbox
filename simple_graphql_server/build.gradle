@@ -22,10 +22,17 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'com.graphql-java-kickstart:graphql-spring-boot-starter:8.0.0'
+	runtimeOnly 'com.graphql-java-kickstart:graphiql-spring-boot-starter:8.0.0'
+	// For subscripion
+	implementation 'io.projectreactor:reactor-core:3.4.1'
+	// To embed GraphiQL tool
+	implementation 'com.graphql-java-kickstart:graphiql-spring-boot-starter:8.0.0'
+    // For metrics
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus:1.6.0'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {
