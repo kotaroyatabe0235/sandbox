@@ -1,6 +1,6 @@
 version: '3.6'
 services:
-  java:
+  java-tetris:
     build: ./java
     ports:
       - 8080:8080
