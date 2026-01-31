@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simple Project Tool</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; }
+    button { margin-right: 4px; }
+
+    .gantt {
+      margin-top: 20px;
+      overflow-x: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+
+    .timeline {
+      display: flex;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .timeline div {
+      width: 40px;
+      text-align: center;
+      border-right: 1px solid #ddd;
+    }
+
+    .gantt-row {
+      position: relative;
+      height: 24px;
+      margin-bottom: 6px;
+    }
+
+    .gantt-bar {
+      position: absolute;
+      height: 100%;
+      background: #4caf50;
+      color: white;
+      font-size: 12px;
+      padding-left: 4px;
+      box-sizing: border-box;
+    }
+
+    .warn {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h2>タスク追加 / 編集</h2>
+<div>
+  タスク名:
+  <input id="name" />
+  開始日:
+  <input id="start" type="date" />
+  終了日:
+  <input id="end" type="date" />
+  担当:
+  <select id="owner"></select>
+  <button onclick="saveTask()">保存</button>
+  <button onclick="resetForm()">キャンセル</button>
+</div>
+
+<h2>タスク一覧</h2>
+<table>
+  <thead>
+    <tr>
+      <th>タスク</th>
+      <th>開始日</th>
+      <th>終了日</th>
+      <th>担当</th>
+      <th>操作</th>
+    </tr>
+  </thead>
+  <tbody id="taskTable"></tbody>
+</table>
+
+<h2>ガントチャート</h2>
+<div class="gantt">
+  <div class="timeline" id="timeline"></div>
+  <div id="ganttBody"></div>
+</div>
+
+<h2>リソース管理</h2>
+<table>
+  <thead>
+    <tr>
+      <th>担当者</th>
+      <th>総人日</th>
+      <th>最大同時タスク数</th>
+      <th>警告</th>
+    </tr>
+  </thead>
+  <tbody id="resourceTable"></tbody>
+</table>
+
+<script>
+  /* ===== マスタ ===== */
+  const members = ["山田", "佐藤", "鈴木"];
+
+  /* ===== 状態 ===== */
+  let tasks = [];
+  let editingTaskId = null;
+  const DAY_WIDTH = 40;
+
+  /* ===== 初期化 ===== */
+  function init() {
+    members.forEach(m => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      owner.appendChild(opt);
+    });
+  }
+
+  /* ===== CRUD ===== */
+  function saveTask() {
+    const task = {
+      id: editingTaskId ?? Date.now(),
+      name: name.value,
+      start: new Date(start.value),
+      end: new Date(end.value),
+      owner: owner.value
+    };
+
+    if (editingTaskId) {
+      tasks = tasks.map(t => t.id === editingTaskId ? task : t);
+    } else {
+      tasks.push(task);
+    }
+
+    resetForm();
+    render();
+  }
+
+  function editTask(id) {
+    const t = tasks.find(t => t.id === id);
+    name.value = t.name;
+    start.value = format(t.start);
+    end.value = format(t.end);
+    owner.value = t.owner;
+    editingTaskId = id;
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    render();
+  }
+
+  function resetForm() {
+    name.value = "";
+    start.value = "";
+    end.value = "";
+    owner.selectedIndex = 0;
+    editingTaskId = null;
+  }
+
+  /* ===== 描画 ===== */
+  function render() {
+    renderTable();
+    renderGantt();
+    renderResource();
+  }
+
+  function renderTable() {
+    taskTable.innerHTML = "";
+    tasks.forEach(t => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${t.name}</td>
+        <td>${format(t.start)}</td>
+        <td>${format(t.end)}</td>
+        <td>${t.owner}</td>
+        <td>
+          <button onclick="editTask(${t.id})">編集</button>
+          <button onclick="deleteTask(${t.id})">削除</button>
+        </td>
+      `;
+      taskTable.appendChild(tr);
+    });
+  }
+
+  function renderGantt() {
+    ganttBody.innerHTML = "";
+    timeline.innerHTML = "";
+    if (tasks.length === 0) return;
+
+    const minDate = new Date(Math.min(...tasks.map(t => t.start)));
+    const maxDate = new Date(Math.max(...tasks.map(t => t.end)));
+    const days = Math.ceil((maxDate - minDate) / 86400000) + 1;
+
+    for (let i = 0; i < days; i++) {
+      const d = new Date(minDate);
+      d.setDate(d.getDate() + i);
+      const div = document.createElement("div");
+      div.textContent = d.getDate();
+      timeline.appendChild(div);
+    }
+
+    tasks.forEach(t => {
+      const row = document.createElement("div");
+      row.className = "gantt-row";
+
+      const left = (t.start - minDate) / 86400000 * DAY_WIDTH;
+      const width = ((t.end - t.start) / 86400000 + 1) * DAY_WIDTH;
+
+      const bar = document.createElement("div");
+      bar.className = "gantt-bar";
+      bar.style.left = left + "px";
+      bar.style.width = width + "px";
+      bar.textContent = `${t.name} (${t.owner})`;
+
+      row.appendChild(bar);
+      ganttBody.appendChild(row);
+    });
+  }
+
+  /* ===== リソース管理 ===== */
+  function renderResource() {
+    resourceTable.innerHTML = "";
+
+    members.forEach(member => {
+      const memberTasks = tasks.filter(t => t.owner === member);
+      const dayMap = {};
+
+      memberTasks.forEach(t => {
+        for (
+          let d = new Date(t.start);
+          d <= t.end;
+          d.setDate(d.getDate() + 1)
+        ) {
+          const key = format(d);
+          dayMap[key] = (dayMap[key] || 0) + 1;
+        }
+      });
+
+      const totalDays = Object.keys(dayMap).length;
+      const maxOverlap = Math.max(0, ...Object.values(dayMap));
+      const warn = maxOverlap >= 2 ? "過負荷" : "";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${member}</td>
+        <td>${totalDays}</td>
+        <td>${maxOverlap}</td>
+        <td class="${warn ? 'warn' : ''}">${warn}</td>
+      `;
+      resourceTable.appendChild(tr);
+    });
+  }
+
+  function format(d) {
+    return new Date(d).toISOString().slice(0, 10);
+  }
+
+  init();
+</script>
+
+</body>
+</html>
